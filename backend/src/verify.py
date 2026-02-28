@@ -1,6 +1,5 @@
 import io
 from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
