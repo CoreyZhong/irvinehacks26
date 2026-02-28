@@ -8,20 +8,30 @@ import json
 import os
 import random
 import re
+import logging
+import tempfile
+import uuid
 from typing import Any
-
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from google import genai
 from starlette.concurrency import run_in_threadpool
 
+load_dotenv()
 
 # The app which manages all of the API routes
 app = FastAPI()
 
 
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-KEY_ENV = "GEMINI_API_KEY"
+KEY_ENV = "QUEST_GENERATION_GEMINI_API_KEY"
+DEBUG_MODE = os.getenv("QUEST_DEBUG", "false").lower() in ("1", "true", "yes")
+
+# module logger
+logger = logging.getLogger(__name__)
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
 
 
 # The decorator declares the function as a FastAPI route on the given path.
@@ -105,7 +115,7 @@ def parse_json_from_text(text: str) -> Any:
 async def generate_quest(body: QuestRequest):
     """Generate a quest using Gemini (Google GenAI SDK) and return parsed JSON.
 
-    Expects `GEMINI_API_KEY` to be set in the environment. Uses `MODEL_NAME`.
+    Expects "QUEST_GENERATION_GEMINI_API_KEY" to be set in the environment. Uses `MODEL_NAME`.
     """
 
     api_key = os.environ.get(KEY_ENV)
@@ -133,12 +143,24 @@ async def generate_quest(body: QuestRequest):
     try:
         parsed = parse_json_from_text(text)
     except Exception:
-        # Save raw output for debugging and return helpful error
-        try:
-            with open("backend/quests_raw.txt", "w") as f:
-                f.write(str(text))
-        except Exception:
-            pass
-        raise HTTPException(status_code=502, detail={"error": "Failed to parse model response", "raw": str(text)})
+        # Log a truncated version of the model output server-side and return a
+        # generic error to the client. Optionally write a debug artifact to a
+        # temp file when `QUEST_DEBUG` is enabled.
+        raw = str(text)
+        truncated = raw if len(raw) <= 2000 else raw[:2000] + "... [truncated]"
+        logger.warning("Failed to parse model response (truncated): %s", truncated)
+
+        if DEBUG_MODE:
+            try:
+                tmpdir = tempfile.gettempdir()
+                fname = f"quests_raw_{uuid.uuid4().hex}.txt"
+                path = os.path.join(tmpdir, fname)
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(raw)
+                logger.info("Wrote debug artifact for parse failure: %s", path)
+            except Exception:
+                logger.exception("Unable to write debug artifact for parse failure")
+
+        raise HTTPException(status_code=502, detail={"error": "Failed to parse model response"})
 
     return parsed
