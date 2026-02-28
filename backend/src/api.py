@@ -42,6 +42,8 @@ async def verify_image(location_id: str, file: UploadFile = File(...)):
     
     # 2. Get the quest details from your data
     data = LOCATION_DATA.get(location_id.lower())
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Unknown location_id: {location_id}")
     
     # 3. Ask Gemini to "look" at the photo
     # This calls the function we discussed earlier
