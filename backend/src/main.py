@@ -20,7 +20,10 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 # import api
-from backend.src.api import app as api_app
+try:
+    from .api import app as api_app
+except ImportError:
+    import api as api_app
 
 PUBLIC_DIRECTORY = Path("public")
 

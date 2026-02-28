@@ -1,54 +1,56 @@
-"""
-This file defines the FastAPI app for the API and all of its routes.
-To run this API, use the FastAPI CLI
-$ fastapi dev src/api.py
-"""
-
+import os
 import random
-from backend.src.verify import verify_quest_completion
-from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile, Depends
+from google import genai
+# Using a relative import to prevent the "ModuleNotFound" error
+try:
+    from .verify import verify_quest_completion
+except ImportError:
+    from verify import verify_quest_completion
 
-# The app which manages all of the API routes
 app = FastAPI()
+
+# 1. The "Lazy" Client Builder
+def get_ai_client():
+    api_key = os.getenv("API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="API_KEY is missing from .env")
+    return genai.Client(api_key=api_key, http_options={'api_version': 'v1beta'})
 
 LOCATION_DATA = {
     "dbh": {"name": "Donald Bren Hall", "ctx": "6th floor balcony, glass railings, park view."},
     "fountain": {"name": "Infinity Fountain", "ctx": "Circular water feature, brick plaza."},
     "statue": {"name": "Anteater Statue", "ctx": "Bronze statue near Bren Events Center."}
 }
-# The decorator declares the function as a FastAPI route on the given path.
-# This route in particular is a GET route at "/hello" which returns the example
-# dictionary as a JSON response with the status code 200 by default.
+
 @app.get("/hello")
-async def hello() -> dict[str, str]:
-    """Get hello message."""
+async def hello():
     return {"message": "Hello from FastAPI"}
 
-
-# The route can also handle query parameters encoded in the URL after the path,
-# e.g. `/random?maximum=1000`
-# If the value isn't an integer, FastAPI will return an error response
-# with a validation error describing the invalid input.
-@app.get("/random")
-async def get_random_item(maximum: int) -> dict[str, int]:
-    """Get an item with a random ID."""
-    return {"itemId": random.randint(0, maximum)}
-
-
 @app.post("/verify/{location_id}")
-async def verify_image(location_id: str, file: UploadFile = File(...)):
-    # 1. Read the image data sent by the phone/browser
+async def verify_image(
+    location_id: str, 
+    file: UploadFile = File(...),
+    client: genai.Client = Depends(get_ai_client) # Inject the client here
+):
+    # 1. Validate file type
+    allowed_types = {"image/jpeg", "image/png", "image/heic", "image/heif"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    # 2. Read image data (ONLY ONCE)
     image_bytes = await file.read()
     
-    # 2. Get the quest details from your data
+    # 3. Get quest details
     data = LOCATION_DATA.get(location_id.lower())
+    if not data:
+        raise HTTPException(status_code=404, detail="Location not found")
     
-    # 3. Ask Gemini to "look" at the photo
-    # This calls the function we discussed earlier
+    # 4. Call verification (passing the client!)
     result = verify_quest_completion(
-        image_bytes, 
-        data["name"], 
-        data["ctx"]
+        image_bytes=image_bytes,
+        location_name=data["name"],
+        context=data["ctx"]
     )
     
     return result
