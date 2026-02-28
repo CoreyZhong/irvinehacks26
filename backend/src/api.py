@@ -23,7 +23,7 @@ from fastapi import Depends, FastAPI, HTTPException, UploadFile, File
 
 from auth import CurrentUser, get_current_user
 from quest_generation import QuestRequest, generate_quests
-from quest_verification import verify_quest_image
+from quest_verification import verify_quest_image, verify_at_location
 
 app = FastAPI()
 
@@ -32,6 +32,15 @@ log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 root_logger = logging.getLogger()
 if not root_logger.handlers:
     logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
+
+# Location-based verification: id -> name + context for Gemini
+LOCATION_DATA = {
+    "dbh": {"name": "Donald Bren Hall", "ctx": "6th floor balcony, glass railings, park view."},
+    "fountain": {"name": "Infinity Fountain", "ctx": "Circular water feature, brick plaza."},
+    "statue": {"name": "Anteater Statue", "ctx": "Bronze statue near Bren Events Center."},
+}
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
 
 
 @app.get("/hello")
@@ -74,15 +83,30 @@ async def verify_quest(
     image: UploadFile = File(...),
     current_user: CurrentUser = Depends(get_current_user),
 ) -> dict[str, object]:
-    """
-    Verify quest completion with an image. Protected; requires Bearer token.
-    See quest_verification module.
-    """
+    """Verify quest completion with an image. Protected; requires Bearer token."""
+    content_type = image.content_type or "image/jpeg"
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
     image_bytes = await image.read()
-    result = verify_quest_image(quest_description, image_bytes)
+    result = await verify_quest_image(quest_description, image_bytes, content_type)
     return {
         "userId": current_user.id,
         "questDescription": quest_description,
         "verified": result["verified"],
         "reason": result["reason"],
+        "confidence_score": result.get("confidence_score"),
     }
+
+
+@app.post("/verify/{location_id}")
+async def verify_image(location_id: str, file: UploadFile = File(...)) -> dict[str, object]:
+    """Verify that an uploaded image shows the given location. See quest_verification module."""
+    content_type = file.content_type or "image/jpeg"
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+    image_bytes = await file.read()
+    data = LOCATION_DATA.get(location_id.lower())
+    if not data:
+        raise HTTPException(status_code=404, detail="Unknown location")
+    result = await verify_at_location(image_bytes, content_type, data["name"], data["ctx"])
+    return result
