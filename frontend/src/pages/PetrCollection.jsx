@@ -1,5 +1,5 @@
 import { useGame } from '../context/GameContext';
-import { outfits, getOutfitById } from '../data/outfits';
+import { getOutfitById } from '../data/outfits';
 import petrLogo from '../assets/petr.png';
 import './pages.css';
 import './PetrCollection.css';
@@ -104,27 +104,27 @@ const PetrCollection = () => {
         <div className="locker-section">
           <h2>Locker</h2>
           <div className="locker-grid">
-            {outfits.slice(0, 12).map(outfit => {
-              const isOwned = ownedOutfits.includes(outfit.id);
-              const equipped = isEquipped(outfit.id, outfit.type);
-              
-              return (
-                <div 
-                  key={outfit.id} 
-                  className={`locker-slot ${isOwned ? 'owned' : 'locked'} ${equipped ? 'equipped' : ''}`}
-                  onClick={() => isOwned && handleEquip(outfit.id)}
-                >
-                  {isOwned ? (
-                    <>
-                      <div className="outfit-name">{outfit.name}</div>
-                      {equipped && <div className="equipped-indicator">✓</div>}
-                    </>
-                  ) : (
-                    <div className="locked-indicator">🔒</div>
-                  )}
-                </div>
-              );
-            })}
+            {ownedOutfits.length === 0 ? (
+              <p className="empty-locker">No items yet. Purchase items from the shop!</p>
+            ) : (
+              ownedOutfits.map(outfitId => {
+                const outfit = getOutfitById(outfitId);
+                if (!outfit) return null;
+                
+                const equipped = isEquipped(outfit.id, outfit.type);
+                
+                return (
+                  <div 
+                    key={outfit.id} 
+                    className={`locker-slot owned ${equipped ? 'equipped' : ''}`}
+                    onClick={() => handleEquip(outfit.id)}
+                  >
+                    <div className="outfit-name">{outfit.name}</div>
+                    {equipped && <div className="equipped-indicator">✓</div>}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
