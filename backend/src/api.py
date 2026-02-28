@@ -39,18 +39,30 @@ async def get_random_item(maximum: int) -> dict[str, int]:
 async def verify_image(location_id: str, file: UploadFile = File(...)):
     # 1. Read the image data sent by the phone/browser
     image_bytes = await file.read()
+    # 1. Validate the uploaded file type
+    allowed_content_types = {
+        "image/jpeg",
+        "image/png",
+        "image/heic",
+        "image/heif",
+    }
+    content_type = file.content_type
+    if content_type not in allowed_content_types:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    # 2. Read the image data sent by the phone/browser
+    image_bytes = await file.read()
     
-    # 2. Get the quest details from your data
+    # 3. Get the quest details from your data
     data = LOCATION_DATA.get(location_id.lower())
-    if data is None:
-        raise HTTPException(status_code=404, detail=f"Unknown location_id: {location_id}")
     
-    # 3. Ask Gemini to "look" at the photo
+    # 4. Ask Gemini to "look" at the photo
     # This calls the function we discussed earlier
     result = verify_quest_completion(
-        image_bytes, 
-        data["name"], 
-        data["ctx"]
+        image_bytes,
+        content_type,
+        data["name"],
+        data["ctx"],
     )
     
     return result
