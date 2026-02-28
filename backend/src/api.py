@@ -31,7 +31,9 @@ DEBUG_MODE = os.getenv("QUEST_DEBUG", "false").lower() in ("1", "true", "yes")
 # module logger
 logger = logging.getLogger(__name__)
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
+root_logger = logging.getLogger()
+if not root_logger.handlers:
+    logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
 
 
 # The decorator declares the function as a FastAPI route on the given path.
