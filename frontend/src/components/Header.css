@@ -89,11 +89,6 @@
   filter: brightness(0) saturate(100%) invert(25%) sepia(12%) saturate(1037%) hue-rotate(169deg) brightness(95%) contrast(88%);
 }
 
-/* Add padding to page content to account for fixed header */
-.page-container {
-  padding-top: 5rem !important;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .app-header {
