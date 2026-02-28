@@ -28,6 +28,7 @@ from fastapi import Depends, FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from google import genai
 from starlette.concurrency import run_in_threadpool
+import threading
 
 from auth import CurrentUser, get_current_user
 
@@ -38,6 +39,11 @@ app = FastAPI()
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 KEY_ENV = "QUEST_GENERATION_GEMINI_API_KEY"
 DEBUG_MODE = os.getenv("QUEST_DEBUG", "false").lower() in ("1", "true", "yes")
+
+# Lazy, module-level singleton for the GenAI client so we avoid re-instantiating
+# it on every request.
+_client_lock = threading.Lock()
+_genai_client: genai.Client | None = None
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -169,6 +175,24 @@ def parse_json_from_text(text: str) -> Any:
     raise ValueError("Failed to extract valid quest JSON from model response")
 
 
+def get_genai_client() -> genai.Client:
+    """Get a singleton GenAI client (thread-safe lazy init)."""
+    global _genai_client
+    if _genai_client is not None:
+        return _genai_client
+
+    with _client_lock:
+        if _genai_client is not None:
+            return _genai_client
+
+        api_key = os.environ.get(KEY_ENV)
+        if not api_key:
+            raise HTTPException(status_code=500, detail=f"Missing {KEY_ENV} environment variable")
+
+        _genai_client = genai.Client(api_key=api_key)
+        return _genai_client
+
+
 @app.post("/quests/generate")
 async def generate_quest(body: QuestRequest):
     """Generate a quest using Gemini (Google GenAI SDK) and return parsed JSON.
@@ -176,11 +200,7 @@ async def generate_quest(body: QuestRequest):
     Expects "QUEST_GENERATION_GEMINI_API_KEY" to be set in the environment. Uses `MODEL_NAME`.
     """
 
-    api_key = os.environ.get(KEY_ENV)
-    if not api_key:
-        raise HTTPException(status_code=500, detail=f"Missing {KEY_ENV} environment variable")
-
-    client = genai.Client(api_key=api_key)
+    client = get_genai_client()
 
     prompt = build_prompt(body)
 
