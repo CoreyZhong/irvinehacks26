@@ -140,8 +140,18 @@ export const GameProvider = ({ children }) => {
   };
 
   const rerollShop = () => {
+    if (state.coins < 2) {
+      alert('Not enough coins! Reroll costs 2 coins.');
+      return false;
+    }
+    
     const newInventory = getRandomShopItems(3, state.ownedOutfits);
-    setState(prev => ({ ...prev, shopInventory: newInventory }));
+    setState(prev => ({ 
+      ...prev, 
+      coins: prev.coins - 2,
+      shopInventory: newInventory 
+    }));
+    return true;
   };
 
   const value = {

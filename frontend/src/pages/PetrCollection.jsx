@@ -71,8 +71,12 @@ const PetrCollection = () => {
               ))
             )}
           </div>
-          <button className="reroll-button" onClick={rerollShop}>
-            Reroll
+          <button 
+            className="reroll-button" 
+            onClick={rerollShop}
+            disabled={coins < 2}
+          >
+            Reroll (2 coins)
           </button>
           <div className="coins-display">
             <strong>Coins: {coins}</strong>
