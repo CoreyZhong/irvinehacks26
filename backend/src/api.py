@@ -79,7 +79,7 @@ def build_prompt(req: QuestRequest) -> str:
         - The quest must not involve any activities that could cause harm to oneself or others.\n
         - The quest must not involve any activities that could damage property.\n
         - The quest must not involve any activities that could be considered harassment or bullying.\n
-        _ The quest includes taking a picture to prove that it has been completed at the end, so something that can be verified with a photo.\n
+        - The quest includes taking a picture to prove that it has been completed at the end, so something that can be verified with a photo.\n
         Some potential quest categories include:\n 
         - find something with a certain color\n
         - find something anteater related\n
