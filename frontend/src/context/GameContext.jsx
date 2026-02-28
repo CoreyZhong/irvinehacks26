@@ -138,7 +138,8 @@ export const GameProvider = ({ children }) => {
         return { success: false, error: 'Username already exists' };
       }
       
-      users[username] = { password };
+      // Store only non-sensitive metadata for the user; do not store passwords client-side
+      users[username] = { createdAt: new Date().toISOString() };
       localStorage.setItem('zotQuestsUsers', JSON.stringify(users));
       
       setAuth({ isLoggedIn: true, currentUser: { username } });
