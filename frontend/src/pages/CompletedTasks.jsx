@@ -1,4 +1,5 @@
 import { useGame } from '../context/GameContext';
+import petrLogo from '../assets/petr.png';
 import './pages.css';
 import './CompletedTasks.css';
 
@@ -8,7 +9,7 @@ const CompletedTasks = () => {
   return (
     <div className="page-container">
       <button className="back-button" onClick={() => navigateTo('landing')}>
-        <div className="back-icon">🐜</div>
+        <img src={petrLogo} alt="Back" className="back-icon" />
         <span>Back</span>
       </button>
 

@@ -1,4 +1,5 @@
 import { useGame } from '../context/GameContext';
+import petrLogo from '../assets/petr.png';
 import './pages.css';
 import './Landing.css';
 
@@ -14,15 +15,7 @@ const Landing = () => {
             <h1 className="title-quests">Quests</h1>
           </div>
           <div className="anteater-mascot">
-            <div className="anteater-placeholder">
-              {/* Placeholder for anteater illustration */}
-              <svg width="200" height="200" viewBox="0 0 200 200">
-                <circle cx="100" cy="100" r="80" fill="#7B9CB5" />
-                <circle cx="80" cy="80" r="10" fill="#333" />
-                <circle cx="120" cy="80" r="10" fill="#333" />
-                <ellipse cx="100" cy="120" rx="20" ry="10" fill="#555" />
-              </svg>
-            </div>
+            <img src={petrLogo} alt="Petr the Anteater" className="petr-logo" />
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import { useGame } from '../context/GameContext';
 import { useState, useEffect } from 'react';
+import petrLogo from '../assets/petr.png';
 import './pages.css';
 import './ProofOfCompletion.css';
 
@@ -69,7 +70,7 @@ const ProofOfCompletion = () => {
   return (
     <div className="page-container">
       <button className="back-button" onClick={() => navigateTo('openTasks')}>
-        <div className="back-icon">🐜</div>
+        <img src={petrLogo} alt="Back" className="back-icon" />
         <span>Back</span>
       </button>
 

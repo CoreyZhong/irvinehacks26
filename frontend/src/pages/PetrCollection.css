@@ -114,6 +114,12 @@
   align-items: center;
 }
 
+.petr-character {
+  max-width: 300px;
+  height: auto;
+  display: block;
+}
+
 .equipped-items {
   margin-top: 1rem;
   display: flex;

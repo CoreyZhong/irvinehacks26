@@ -1,6 +1,7 @@
 import { useGame } from '../context/GameContext';
 import { getRandomQuests } from '../data/quests';
 import { useState, useEffect } from 'react';
+import petrLogo from '../assets/petr.png';
 import './pages.css';
 import './OpenTasks.css';
 
@@ -22,7 +23,7 @@ const OpenTasks = () => {
   return (
     <div className="page-container">
       <button className="back-button" onClick={() => navigateTo('landing')}>
-        <div className="back-icon">🐜</div>
+        <img src={petrLogo} alt="Back" className="back-icon" />
         <span>Back</span>
       </button>
 

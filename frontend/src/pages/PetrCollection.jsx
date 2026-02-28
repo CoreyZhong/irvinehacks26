@@ -1,5 +1,6 @@
 import { useGame } from '../context/GameContext';
 import { outfits, getOutfitById } from '../data/outfits';
+import petrLogo from '../assets/petr.png';
 import './pages.css';
 import './PetrCollection.css';
 
@@ -36,7 +37,7 @@ const PetrCollection = () => {
   return (
     <div className="page-container petr-collection-page">
       <button className="back-button" onClick={() => navigateTo('landing')}>
-        <div className="back-icon">🐜</div>
+        <img src={petrLogo} alt="Back" className="back-icon" />
         <span>Back</span>
       </button>
 
@@ -84,16 +85,7 @@ const PetrCollection = () => {
           <div className="petr-display">
             {/* Base anteater */}
             <div className="petr-base">
-              <svg width="300" height="300" viewBox="0 0 300 300">
-                <ellipse cx="150" cy="200" rx="80" ry="100" fill="#7B9CB5" />
-                <ellipse cx="120" cy="120" rx="50" ry="60" fill="#7B9CB5" />
-                <circle cx="110" cy="110" r="8" fill="#333" />
-                <circle cx="140" cy="110" r="8" fill="#333" />
-                <ellipse cx="125" cy="135" rx="15" ry="8" fill="#555" />
-                <line x1="125" y1="80" x2="125" y2="50" stroke="#7B9CB5" strokeWidth="15" />
-                <line x1="115" y1="60" x2="95" y2="50" stroke="#7B9CB5" strokeWidth="12" />
-                <line x1="135" y1="60" x2="155" y2="50" stroke="#7B9CB5" strokeWidth="12" />
-              </svg>
+              <img src={petrLogo} alt="Petr the Anteater" className="petr-character" />
             </div>
             
             {/* Display equipped outfits */}

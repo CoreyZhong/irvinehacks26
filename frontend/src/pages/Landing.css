@@ -39,6 +39,13 @@
 .anteater-mascot {
   display: flex;
   justify-content: center;
+  margin-top: 2rem;
+}
+
+.petr-logo {
+  max-width: 300px;
+  height: auto;
+  display: block;
 }
 
 .anteater-placeholder {
