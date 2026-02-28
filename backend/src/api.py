@@ -10,40 +10,71 @@ endpoints on this API.
 """
 
 from pathlib import Path
+import logging
+import os
+import random
+import uuid
 
 from dotenv import load_dotenv
 
-# Load backend/.env so SUPABASE_JWT_SECRET is available (whether run from backend/ or repo root)
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-import random
-
-from fastapi import Depends, FastAPI, UploadFile, File
+from fastapi import Depends, FastAPI, HTTPException, UploadFile, File
 
 from auth import CurrentUser, get_current_user
+from quest_generation import QuestRequest, generate_quests
+from quest_verification import verify_quest_image, verify_at_location
 
-
-# The app which manages all of the API routes
 app = FastAPI()
 
+logger = logging.getLogger(__name__)
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+root_logger = logging.getLogger()
+if not root_logger.handlers:
+    logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
 
-# The decorator declares the function as a FastAPI route on the given path.
-# This route in particular is a GET route at "/hello" which returns the example
-# dictionary as a JSON response with the status code 200 by default.
+# Location-based verification: id -> name + context for Gemini
+LOCATION_DATA = {
+    "dbh": {"name": "Donald Bren Hall", "ctx": "6th floor balcony, glass railings, park view."},
+    "fountain": {"name": "Infinity Fountain", "ctx": "Circular water feature, brick plaza."},
+    "statue": {"name": "Anteater Statue", "ctx": "Bronze statue near Bren Events Center."},
+}
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
+
+
 @app.get("/hello")
 async def hello() -> dict[str, str]:
     """Get hello message."""
     return {"message": "Hello from FastAPI"}
 
 
-# The route can also handle query parameters encoded in the URL after the path,
-# e.g. `/random?maximum=1000`
-# If the value isn't an integer, FastAPI will return an error response
-# with a validation error describing the invalid input.
 @app.get("/random")
 async def get_random_item(maximum: int) -> dict[str, int]:
     """Get an item with a random ID."""
     return {"itemId": random.randint(0, maximum)}
+
+
+@app.post("/quests/generate")
+async def generate_quest(body: QuestRequest):
+    """Generate quests using Gemini. See quest_generation module."""
+    try:
+        return await generate_quests(body)
+    except ValueError as e:
+        msg = str(e)
+        if "Missing" in msg and "environment variable" in msg:
+            raise HTTPException(status_code=500, detail=msg) from e
+        raise HTTPException(
+            status_code=502,
+            detail={"error": "Failed to parse model response"},
+        ) from e
+    except Exception as exc:
+        error_id = uuid.uuid4().hex
+        logger.exception("Model call failed (%s)", error_id)
+        raise HTTPException(
+            status_code=502,
+            detail={"error": "Model call failed", "error_id": error_id},
+        ) from exc
 
 
 @app.post("/verify-quest")
@@ -52,25 +83,30 @@ async def verify_quest(
     image: UploadFile = File(...),
     current_user: CurrentUser = Depends(get_current_user),
 ) -> dict[str, object]:
-    """
-    Example protected endpoint for AI-based quest verification.
-
-    The client must:
-    - Authenticate with Supabase to obtain an access token.
-    - Call this endpoint with `Authorization: Bearer <token>`.
-    - Include the quest description and an image upload.
-
-    This stub currently does not perform any real AI verification. You can
-    integrate your preferred model provider (OpenAI, Gemini, etc.) here and
-    return a verdict that the frontend can use to update Supabase.
-    """
-
-    # TODO: Replace this stub with a real AI call.
-    _ = await image.read()
-
+    """Verify quest completion with an image. Protected; requires Bearer token."""
+    content_type = image.content_type or "image/jpeg"
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+    image_bytes = await image.read()
+    result = await verify_quest_image(quest_description, image_bytes, content_type)
     return {
         "userId": current_user.id,
         "questDescription": quest_description,
-        "verified": False,
-        "reason": "AI verification not yet implemented",
+        "verified": result["verified"],
+        "reason": result["reason"],
+        "confidence_score": result.get("confidence_score"),
     }
+
+
+@app.post("/verify/{location_id}")
+async def verify_image(location_id: str, file: UploadFile = File(...)) -> dict[str, object]:
+    """Verify that an uploaded image shows the given location. See quest_verification module."""
+    content_type = file.content_type or "image/jpeg"
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+    image_bytes = await file.read()
+    data = LOCATION_DATA.get(location_id.lower())
+    if not data:
+        raise HTTPException(status_code=404, detail="Unknown location")
+    result = await verify_at_location(image_bytes, content_type, data["name"], data["ctx"])
+    return result
