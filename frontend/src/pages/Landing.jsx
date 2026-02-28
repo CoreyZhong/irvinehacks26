@@ -40,7 +40,7 @@ const Landing = () => {
             className="nav-button"
             onClick={() => navigateTo('petrCollection')}
           >
-            <div className="button-icon">🐾</div>
+            <img src={petrLogo} alt="" className="button-icon-img" />
             <span>Petr Collection</span>
           </button>
         </div>
