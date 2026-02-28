@@ -78,7 +78,7 @@ class QuestRequest(BaseModel):
 def build_prompt(req: QuestRequest) -> str:
     # Force JSON-only output and give a short schema
     return (
-        "Respond with ONLY a single valid JSON array of quest objects and nothing else.\n"
+        "Respond with ONLY a single valid JSON array of 3 quest objects and nothing else.\n"
 
         """You are generating fun, safe side quests for UCI students.\n
         Rules: \n
