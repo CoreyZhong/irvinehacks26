@@ -1,65 +1,72 @@
-import { useState } from "react";
-
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { GameProvider, useGame } from "./context/GameContext";
+import Header from "./components/Header";
+import Login from "./pages/Login";
+import Landing from "./pages/Landing";
+import OpenTasks from "./pages/OpenTasks";
+import ProofOfCompletion from "./pages/ProofOfCompletion";
+import CompletedTasks from "./pages/CompletedTasks";
+import PetrCollection from "./pages/PetrCollection";
+import { useAuth } from "@/contexts/AuthContext";
 import "./App.css";
 
-import RandomItem from "@/components/RandomItem";
-import AuthForm from "@/components/AuthForm";
-import { useAuth } from "@/contexts/AuthContext";
-
 /*
-App shows Supabase login/signup when not authenticated, and the main UI when logged in.
-Use useAuth() for session, accessToken, signOut. Use apiFetch(path, { accessToken }) to call protected backend routes.
+Zot Quests - Side Quest Generator for Real Life
+AI generates random side quests for UCI students to accomplish within a given time frame.
+Complete quests to earn coins and customize your Petr (anteater pet)!
+Auth: Supabase (useAuth). When logged in, GameProvider gets supabaseUser so game state stays in sync.
 */
-function App() {
-	const { user, loading, signOut, accessToken } = useAuth();
-	const [count, setCount] = useState(0);
 
-	if (loading) {
-		return <div style={{ padding: "2rem", textAlign: "center" }}>Loading…</div>;
+function AppContent() {
+	const { currentPage, isLoggedIn } = useGame();
+
+	if (!isLoggedIn) {
+		return <Login />;
 	}
 
-	if (!user) {
+	const renderPage = () => {
+		switch (currentPage) {
+			case "landing":
+				return <Landing />;
+			case "openTasks":
+				return <OpenTasks />;
+			case "proof":
+				return <ProofOfCompletion />;
+			case "completedTasks":
+				return <CompletedTasks />;
+			case "petrCollection":
+				return <PetrCollection />;
+			default:
+				return <Landing />;
+		}
+	};
+
+	return (
+		<div className="app">
+			<Header />
+			{renderPage()}
+		</div>
+	);
+}
+
+function App() {
+	const { user, loading, signOut } = useAuth();
+
+	if (loading) {
 		return (
-			<>
-				<h1 style={{ textAlign: "center" }}>Side Quest</h1>
-				<AuthForm />
-			</>
+			<div style={{ padding: "2rem", textAlign: "center" }}>
+				Loading…
+			</div>
 		);
 	}
 
+	if (!user) {
+		return <Login />;
+	}
+
 	return (
-		<>
-			<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1rem" }}>
-				<div>
-					<a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-						<img src={viteLogo} className="logo" alt="Vite logo" />
-					</a>
-					<a href="https://react.dev" target="_blank" rel="noreferrer">
-						<img src={reactLogo} className="logo react" alt="React logo" />
-					</a>
-				</div>
-				<div>
-					<span style={{ marginRight: 8 }}>Logged in as {user.email}</span>
-					<button type="button" onClick={() => signOut()}>
-						Sign out
-					</button>
-				</div>
-			</div>
-			<h1>Vite + React</h1>
-			<div className="card">
-				<button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-				<p>
-					Edit <code>src/App.jsx</code> and save to test HMR
-				</p>
-				<RandomItem maximum={1000} />
-				<p style={{ fontSize: 12, color: "#666" }}>
-					Use <code>{'apiFetch("verify-quest", { accessToken, method: "POST", body: ... })'}</code> to call protected backend with your Supabase token.
-				</p>
-			</div>
-			<p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-		</>
+		<GameProvider supabaseUser={user} signOut={signOut}>
+			<AppContent />
+		</GameProvider>
 	);
 }
 
