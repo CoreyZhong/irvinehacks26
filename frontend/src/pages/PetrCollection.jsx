@@ -1,6 +1,8 @@
 import { useGame } from '../context/GameContext';
 import { getOutfitById } from '../data/outfits';
 import petrLogo from '../assets/petr.png';
+import baseballCapImage from '../assets/clothing/baseball_cap.png';
+import BackButton from '../components/BackButton';
 import './pages.css';
 import './PetrCollection.css';
 
@@ -29,12 +31,20 @@ const PetrCollection = () => {
     }
   };
 
-  const isEquipped = (outfitId, type) => {
-    return equippedOutfits[type] === outfitId;
+  const selectedOutfitId =
+    equippedOutfits?.selected ??
+    Object.values(equippedOutfits || {}).find(value => typeof value === 'number');
+
+  const selectedOutfit =
+    typeof selectedOutfitId === 'number' ? getOutfitById(selectedOutfitId) : null;
+
+  const isEquipped = (outfitId) => {
+    return selectedOutfitId === outfitId;
   };
 
   return (
     <div className="page-container petr-collection-page">
+      <BackButton destination="landing" />
       <h1 className="page-title">Petr Collection</h1>
 
       <div className="petr-collection-layout">
@@ -83,19 +93,21 @@ const PetrCollection = () => {
           <div className="petr-display">
             {/* Base anteater */}
             <div className="petr-base">
-              <img src={petrLogo} alt="Petr the Anteater" className="petr-character" />
+              <div className="petr-character-wrapper">
+                <img src={petrLogo} alt="Petr the Anteater" className="petr-character" />
+                {selectedOutfit?.name === 'Baseball Cap' && (
+                  <img src={baseballCapImage} alt="Baseball Cap" className="petr-overlay petr-overlay-cap" />
+                )}
+              </div>
             </div>
             
             {/* Display equipped outfits */}
             <div className="equipped-items">
-              {Object.entries(equippedOutfits).map(([type, outfitId]) => {
-                const outfit = getOutfitById(outfitId);
-                return outfit ? (
-                  <div key={type} className="equipped-badge">
-                    {outfit.name}
-                  </div>
-                ) : null;
-              })}
+              {selectedOutfit ? (
+                <div className="equipped-badge">
+                  {selectedOutfit.name}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -111,7 +123,7 @@ const PetrCollection = () => {
                 const outfit = getOutfitById(outfitId);
                 if (!outfit) return null;
                 
-                const equipped = isEquipped(outfit.id, outfit.type);
+                const equipped = isEquipped(outfit.id);
                 
                 return (
                   <div 
