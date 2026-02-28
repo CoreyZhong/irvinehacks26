@@ -1,10 +1,11 @@
 import { useGame } from '../context/GameContext';
 import petrLogo from '../assets/petr.png';
+import exitIcon from '../assets/exit_icon.png';
 import './pages.css';
 import './Landing.css';
 
 const Landing = () => {
-  const { navigateTo } = useGame();
+  const { navigateTo, logout } = useGame();
 
   return (
     <div className="landing-page">
@@ -42,6 +43,14 @@ const Landing = () => {
           >
             <img src={petrLogo} alt="" className="button-icon-img" />
             <span>Petr Collection</span>
+          </button>
+
+          <button
+            className="nav-button logout-button"
+            onClick={logout}
+          >
+            <img src={exitIcon} alt="Logout" className="button-icon-img" />
+            <span>Logout</span>
           </button>
         </div>
       </div>

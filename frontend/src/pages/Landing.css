@@ -93,6 +93,15 @@
   filter: brightness(0) saturate(100%) invert(25%) sepia(12%) saturate(1037%) hue-rotate(169deg) brightness(95%) contrast(88%);
 }
 
+.logout-button {
+  background: rgba(231, 76, 60, 0.8);
+  color: white;
+}
+
+.logout-button:hover {
+  background: rgba(192, 57, 43, 1);
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .landing-content {
