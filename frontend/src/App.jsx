@@ -6,34 +6,34 @@ import OpenTasks from "./pages/OpenTasks";
 import ProofOfCompletion from "./pages/ProofOfCompletion";
 import CompletedTasks from "./pages/CompletedTasks";
 import PetrCollection from "./pages/PetrCollection";
+import { useAuth } from "@/contexts/AuthContext";
 import "./App.css";
 
 /*
 Zot Quests - Side Quest Generator for Real Life
 AI generates random side quests for UCI students to accomplish within a given time frame.
 Complete quests to earn coins and customize your Petr (anteater pet)!
+Auth: Supabase (useAuth). When logged in, GameProvider gets supabaseUser so game state stays in sync.
 */
 
 function AppContent() {
 	const { currentPage, isLoggedIn } = useGame();
 
-	// If not logged in, show login page
 	if (!isLoggedIn) {
 		return <Login />;
 	}
 
-	// Conditional routing based on currentPage state
 	const renderPage = () => {
 		switch (currentPage) {
-			case 'landing':
+			case "landing":
 				return <Landing />;
-			case 'openTasks':
+			case "openTasks":
 				return <OpenTasks />;
-			case 'proof':
+			case "proof":
 				return <ProofOfCompletion />;
-			case 'completedTasks':
+			case "completedTasks":
 				return <CompletedTasks />;
-			case 'petrCollection':
+			case "petrCollection":
 				return <PetrCollection />;
 			default:
 				return <Landing />;
@@ -49,8 +49,22 @@ function AppContent() {
 }
 
 function App() {
+	const { user, loading, signOut } = useAuth();
+
+	if (loading) {
+		return (
+			<div style={{ padding: "2rem", textAlign: "center" }}>
+				Loading…
+			</div>
+		);
+	}
+
+	if (!user) {
+		return <Login />;
+	}
+
 	return (
-		<GameProvider>
+		<GameProvider supabaseUser={user} signOut={signOut}>
 			<AppContent />
 		</GameProvider>
 	);
