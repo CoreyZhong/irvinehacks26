@@ -1,5 +1,5 @@
 import { useGame } from '../context/GameContext';
-import { getRandomQuests } from '../data/quests';
+import { getRandomQuests, refreshQuests } from '../data/quests';
 import { useState, useEffect } from 'react';
 import BackButton from '../components/BackButton';
 import './pages.css';
@@ -10,10 +10,18 @@ const OpenTasks = () => {
   const [availableQuests, setAvailableQuests] = useState([]);
 
   useEffect(() => {
-    // Get 3 random quests, excluding already completed ones
-    const completedIds = completedQuests.map(q => q.id);
-    const quests = getRandomQuests(3, completedIds);
-    setAvailableQuests(quests);
+    const loadQuests = async () => {
+      const completedIds = completedQuests.map(q => q.id);
+      try {
+        await refreshQuests();
+        const quests = getRandomQuests(3, completedIds);
+        setAvailableQuests(quests);
+      } catch (err) {
+        console.error('Failed to fetch quests', err);
+      }
+    };
+
+    loadQuests();
   }, [completedQuests]);
 
   const handleAcceptQuest = (quest) => {
