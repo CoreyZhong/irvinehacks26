@@ -87,12 +87,15 @@ const OpenTasks = () => {
 
       {loading ? (
         <div className="tasks-loading">
-          <p className="tasks-loading-text">Loading quests</p>
-          <span className="loading-dots" aria-hidden="true">
-            <span className="loading-dot" />
-            <span className="loading-dot" />
-            <span className="loading-dot" />
-          </span>
+          <p className="tasks-loading-text">
+            Generating new adventures for you
+            <span className="loading-dots" aria-hidden="true">
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+            </span>
+          </p>
         </div>
       ) : (
       <div className={`tasks-grid ${activeQuest ? 'tasks-grid-single' : ''}`}>
@@ -133,17 +136,18 @@ const OpenTasks = () => {
       </div>
       )}
 
-      <div className="refresh-tasks-wrap">
-        <button
-          type="button"
-          className="refresh-tasks-button"
-          onClick={handleRetry}
-          disabled={loading}
-          aria-label="Generate new tasks"
-        >
-          {loading ? 'Loading…' : 'Refresh tasks'}
-        </button>
-      </div>
+      {!loading && (
+        <div className="refresh-tasks-wrap">
+          <button
+            type="button"
+            className="refresh-tasks-button"
+            onClick={handleRetry}
+            aria-label="Generate new tasks"
+          >
+            Refresh tasks
+          </button>
+        </div>
+      )}
     </div>
   );
 };
