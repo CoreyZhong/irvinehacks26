@@ -30,7 +30,10 @@ export const refreshQuests = async () => {
 
   if (!res.ok) {
     const err = await res.json().catch(() => null);
-    const message = (err && typeof err.detail === 'string') ? err.detail : (err?.detail?.error) || `Request failed (${res.status})`;
+    let message = (err && typeof err.detail === 'string') ? err.detail : (err?.detail?.error) || `Request failed (${res.status})`;
+    if (res.status === 404) {
+      message = "Not Found. Run the backend with: fastapi run src/main.py (not src/api.py) so routes are at /api/quests/generate.";
+    }
     throw new Error(message);
   }
 

@@ -1,12 +1,11 @@
 """
 This file defines the FastAPI app for the API and all of its routes.
-To run this API, use the FastAPI CLI
-$ fastapi dev src/api.py
+Routes here are defined without an /api prefix (e.g. /quests/generate).
 
-In this project, the backend is focused on AI-related functionality and trusts
-Supabase for authentication and data storage. The frontend should authenticate
-with Supabase directly and send the Supabase access token to any protected
-endpoints on this API.
+For the frontend to work, run the backend with main.py so this app is mounted
+at /api:  fastapi run src/main.py
+(Running this file directly with fastapi run src/api.py serves routes at
+/quests/generate only; the frontend calls /api/quests/generate and will get 404.)
 """
 
 # standard library utilities used in this module
