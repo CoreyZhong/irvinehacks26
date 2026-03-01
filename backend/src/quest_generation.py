@@ -43,35 +43,32 @@ def _get_client() -> genai.Client:
 
 
 class QuestRequest(BaseModel):
-    """Schema for quest generation parameters sent from the frontend."""
-    category: str
-    timeLimitMinutes: int
-    difficulty: str
+    """Empty request body; model kept for FastAPI validation."""
+    pass
 
 
-def build_prompt(req: QuestRequest) -> str:
+def build_prompt(_: QuestRequest | None = None) -> str:
     """Construct the natural language prompt sent to the Gemini model."""
     return (
-        "Respond with ONLY a single valid JSON array of 3 quest objects and nothing else.\n"
-        "You are generating fun, safe side quests for UCI students.\n"
+        "Respond with ONLY a single valid JSON array of exactly 3 quest objects (one easy, one medium, one hard) and nothing else.\n"
+        "Each quest must include: category (easy|medium|hard), description (string), timeLimit (integer minutes), coinReward (integer).\n"
         "Rules:\n"
-        "Generate 3 quests given these constraints:\n"
-        "- The quest must be fun and engaging for UCI students.\n"
-        "- The quest must be safe and not encourage any dangerous behavior.\n"
-        "- The quest must be feasible to complete within a reasonable time frame (e.g. an hour).\n"
-        "- The quest must be appropriate for a college campus setting.\n"
-        "- The quest must not involve any illegal activities.\n"
-        "- The quest must not involve any activities that could cause harm to oneself or others.\n"
-        "- The quest must not involve any activities that could damage property.\n"
-        "- The quest must not involve any activities that could be considered harassment or bullying.\n"
-        "- The quest includes taking a picture to prove that it has been completed at the end, so something that can be verified with a photo.\n"
-        "Some potential quest categories include:\n"
+        "- Fun, safe, campus-appropriate for University of California, Irvine students; no illegal/dangerous/harmful/harassing/damaging activities.\n"
+        "- Feasible within the provided time limit.\n"
+        "- All quests should be completable within the University of California, Irvine campus.\n"
+        "- Difficulty mapping: easy, medium, hard.\n"
+        "- Coin rewards: easy=3, medium=5, hard=7.\n"
+        "- Vary the quests; ensure they are distinct and verifiable by a photo.\n"
+        "Some potential quest ideas include but are not limited to:\n"
         "- find something with a certain color\n"
         "- find something anteater related\n"
         "- find certain plants/trees (only if gemini is able to clearly identify them)\n"
         "- find and take a picture of someone with some type of clothing (that gemini can reliably identify)\n"
-        "Each object must include the keys: title (string), description (string), verificationPrompt (string).\n"
-        f"Category: {req.category}. Time limit: {req.timeLimitMinutes} minutes. Difficulty: {req.difficulty}.\n"
+        "- find a well-known building on campus\n"
+        "Output must be only the JSON array (no Markdown, no commentary).\n"
+        "Time limit should be a random number that is a multiple of 5, between 5 and 60 minutes, depending on the difficulty.\n"
+        "Don't ask player to show their id, or any potentially sensitive personal info.\n"
+        "Users will complete their quests by submitting an image which will be verified through AI; ensure that generated quests are not easily falsifiable or exploitable through unrelated images.\n"
     )
 
 
@@ -88,18 +85,28 @@ def _extract_text_from_resp(resp: Any) -> str:
 def _parse_json_from_text(text: str) -> Any:
     """Find and validate quest JSON inside arbitrary text."""
     def _is_valid_quests(parsed: Any) -> bool:
-        required = {"title", "description", "verificationPrompt"}
-        if isinstance(parsed, list):
-            if not parsed:
+        required = {"category", "description", "timeLimit", "coinReward"}
+        allowed_categories = {"easy", "medium", "hard"}
+
+        def _valid_item(item: Any) -> bool:
+            if not isinstance(item, dict):
                 return False
-            for item in parsed:
-                if not isinstance(item, dict):
-                    return False
-                if not required.issubset(item.keys()):
-                    return False
+            if not required.issubset(item.keys()):
+                return False
+            if item.get("category") not in allowed_categories:
+                return False
+            if not isinstance(item.get("description"), str):
+                return False
+            if not isinstance(item.get("timeLimit"), (int, float)):
+                return False
+            if item.get("coinReward") not in (3, 5, 7):
+                return False
             return True
+
+        if isinstance(parsed, list):
+            return bool(parsed) and all(_valid_item(p) for p in parsed)
         if isinstance(parsed, dict):
-            return required.issubset(parsed.keys())
+            return _valid_item(parsed)
         return False
 
     original_error = None

@@ -1,161 +1,66 @@
-// Hardcoded quest data for Zot Quests
-// Categories: color, anteater, plants/trees, clothing
+let quests = [];
 
-export const quests = [
-  // Color Quests
-  {
-    id: 1,
-    category: 'color',
-    description: 'Find something purple on campus',
-    timeLimit: 15, // minutes
-    coinReward: 10,
-  },
-  {
-    id: 2,
-    category: 'color',
-    description: 'Take a picture of something yellow',
-    timeLimit: 10,
-    coinReward: 8,
-  },
-  {
-    id: 3,
-    category: 'color',
-    description: 'Find a red object near Aldrich Park',
-    timeLimit: 20,
-    coinReward: 12,
-  },
-  {
-    id: 4,
-    category: 'color',
-    description: 'Capture something blue at the campus center',
-    timeLimit: 15,
-    coinReward: 10,
-  },
-  {
-    id: 5,
-    category: 'color',
-    description: 'Find an orange item in the student center',
-    timeLimit: 12,
-    coinReward: 9,
-  },
-
-  // Anteater Quests
-  {
-    id: 6,
-    category: 'anteater',
-    description: 'Find Peter the Anteater statue',
-    timeLimit: 30,
-    coinReward: 15,
-  },
-  {
-    id: 7,
-    category: 'anteater',
-    description: 'Get a photo with someone wearing UCI gear',
-    timeLimit: 20,
-    coinReward: 12,
-  },
-  {
-    id: 8,
-    category: 'anteater',
-    description: 'Find 3 people wearing Zot merchandise',
-    timeLimit: 25,
-    coinReward: 18,
-  },
-  {
-    id: 9,
-    category: 'anteater',
-    description: 'Visit the Anteater Recreation Center',
-    timeLimit: 35,
-    coinReward: 20,
-  },
-
-  // Plants/Trees Quests
-  {
-    id: 10,
-    category: 'plants',
-    description: 'Find a palm tree on campus',
-    timeLimit: 15,
-    coinReward: 10,
-  },
-  {
-    id: 11,
-    category: 'plants',
-    description: 'Take a photo of a succulent plant',
-    timeLimit: 20,
-    coinReward: 11,
-  },
-  {
-    id: 12,
-    category: 'plants',
-    description: 'Find 5 different types of trees in Aldrich Park',
-    timeLimit: 30,
-    coinReward: 20,
-  },
-  {
-    id: 13,
-    category: 'plants',
-    description: 'Photograph a flowering plant',
-    timeLimit: 18,
-    coinReward: 12,
-  },
-  {
-    id: 14,
-    category: 'plants',
-    description: 'Find the biggest tree on campus',
-    timeLimit: 25,
-    coinReward: 15,
-  },
-
-  // Clothing Quests
-  {
-    id: 15,
-    category: 'clothing',
-    description: 'Find someone wearing a backwards hat',
-    timeLimit: 15,
-    coinReward: 10,
-  },
-  {
-    id: 16,
-    category: 'clothing',
-    description: 'Get a photo with someone in sunglasses',
-    timeLimit: 12,
-    coinReward: 8,
-  },
-  {
-    id: 17,
-    category: 'clothing',
-    description: 'Find someone wearing a hoodie',
-    timeLimit: 10,
-    coinReward: 7,
-  },
-  {
-    id: 18,
-    category: 'clothing',
-    description: 'Take a pic with someone in sneakers',
-    timeLimit: 12,
-    coinReward: 9,
-  },
-  {
-    id: 19,
-    category: 'clothing',
-    description: 'Find 3 people wearing the same color shirt',
-    timeLimit: 25,
-    coinReward: 16,
-  },
-  {
-    id: 20,
-    category: 'clothing',
-    description: 'Get a photo of someone in a flannel',
-    timeLimit: 18,
-    coinReward: 11,
-  },
+const FALLBACK_QUESTS = [
+  { id: 'fallback_1', category: 'easy', description: 'Find something blue on campus and take a photo.', timeLimit: 10, coinReward: 3 },
+  { id: 'fallback_2', category: 'medium', description: 'Take a photo with something anteater-related at UCI.', timeLimit: 20, coinReward: 5 },
+  { id: 'fallback_3', category: 'hard', description: 'Find three different trees in Aldrich Park and photograph each.', timeLimit: 30, coinReward: 7 },
 ];
 
-// Helper function to get random quests
+const hashString = (str) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0; // force 32-bit
+  }
+  return Math.abs(hash).toString(36);
+};
+
+const makeQuestId = (q) => {
+  const base = `${q.category || 'unknown'}|${q.timeLimit || ''}|${q.coinReward || ''}|${q.description || ''}`;
+  return `q_${hashString(base)}`;
+};
+
+// Fetch 3 quests from the backend and replace the in-memory list.
+export const refreshQuests = async () => {
+  const res = await fetch('/api/quests/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    let message = (err && typeof err.detail === 'string') ? err.detail : (err?.detail?.error) || `Request failed (${res.status})`;
+    if (res.status === 404) {
+      message = "Not Found. Run the backend with: fastapi run src/main.py (not src/api.py) so routes are at /api/quests/generate.";
+    }
+    throw new Error(message);
+  }
+
+  const data = await res.json();
+  const normalized = Array.isArray(data)
+    ? data.map((q) => ({
+      id: makeQuestId(q),
+        category: q.category,
+        description: q.description,
+        timeLimit: q.timeLimit,
+        coinReward: q.coinReward,
+      }))
+    : [];
+
+  quests = normalized;
+  return quests;
+};
+
 export const getRandomQuests = (count = 3, excludeIds = []) => {
   const availableQuests = quests.filter(q => !excludeIds.includes(q.id));
   const shuffled = [...availableQuests].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
+};
+
+export const getFallbackQuests = (excludeIds = []) => {
+  const available = FALLBACK_QUESTS.filter(q => !excludeIds.includes(q.id));
+  return available.slice(0, 3);
 };
 
 // Helper function to get quest by ID
