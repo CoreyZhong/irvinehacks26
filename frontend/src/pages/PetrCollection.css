@@ -1,6 +1,7 @@
 /* Petr Collection Page Styles */
 
 .petr-collection-page {
+  height: 50vh;
   padding: 1rem;
 }
 
@@ -27,6 +28,7 @@
 }
 
 .shop-items {
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -120,10 +122,30 @@
   align-items: center;
 }
 
+.petr-character-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .petr-character {
   max-width: 300px;
   height: auto;
   display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.petr-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.petr-overlay-cap {
+  width: 200%;
+  left: 32%;
+  top: -43%;
+  transform: translateX(-50%);
 }
 
 .equipped-items {
@@ -155,8 +177,9 @@
 }
 
 .locker-grid {
+  margin-top: 10px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   max-height: 500px;
   overflow-y: auto;
@@ -179,11 +202,6 @@
   text-align: center;
 }
 
-.locker-slot.locked {
-  background: #bdc3c7;
-  cursor: not-allowed;
-}
-
 .locker-slot.owned {
   background: #3498db;
   color: white;
@@ -200,13 +218,6 @@
 
 .locked-indicator {
   font-size: 2rem;
-}
-
-.empty-locker {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: #7f8c8d;
-  padding: 2rem 1rem;
 }
 
 .equipped-indicator {

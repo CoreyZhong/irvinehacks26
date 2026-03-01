@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { GameProvider, useGame } from "./context/GameContext";
-import Header from "./components/Header";
 import Toast from "./components/Toast";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -46,7 +45,6 @@ function AppContent() {
 
 	return (
 		<div className="app">
-			<Header />
 			{renderPage()}
 			{toast && (
 				<Toast
