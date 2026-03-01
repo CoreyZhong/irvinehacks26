@@ -9,6 +9,7 @@ import OpenTasks from "./pages/OpenTasks";
 import ProofOfCompletion from "./pages/ProofOfCompletion";
 import CompletedTasks from "./pages/CompletedTasks";
 import PetrCollection from "./pages/PetrCollection";
+import Leaderboard from "./pages/Leaderboard";
 import { useAuth } from "@/contexts/AuthContext";
 import "./App.css";
 
@@ -46,6 +47,8 @@ function AppContent() {
 				return <CompletedTasks />;
 			case "petrCollection":
 				return <PetrCollection />;
+			case "leaderboard":
+				return <Leaderboard />;
 			default:
 				return <Landing />;
 		}
