@@ -226,23 +226,28 @@ export const GameProvider = ({ children, supabaseUser = null, signOut: supabaseS
   };
 
   const refreshAvailableQuests = async () => {
-    const completedIds = (state.completedQuests || []).map(q => q.id);
     try {
       await refreshQuests();
-      const randomQuests = getRandomQuests(3, completedIds);
-      setState(prev => ({
-        ...prev,
-        availableQuests: randomQuests,
-        openTasksInitialized: true,
-      }));
+      setState(prev => {
+        const completedIds = (prev.completedQuests || []).map(q => q.id);
+        const randomQuests = getRandomQuests(3, completedIds);
+        return {
+          ...prev,
+          availableQuests: randomQuests,
+          openTasksInitialized: true,
+        };
+      });
     } catch (error) {
       console.error('Error refreshing quests:', error);
-      const fallbackQuests = getFallbackQuests(completedIds);
-      setState(prev => ({
-        ...prev,
-        availableQuests: fallbackQuests,
-        openTasksInitialized: true,
-      }));
+      setState(prev => {
+        const completedIds = (prev.completedQuests || []).map(q => q.id);
+        const fallbackQuests = getFallbackQuests(completedIds);
+        return {
+          ...prev,
+          availableQuests: fallbackQuests,
+          openTasksInitialized: true,
+        };
+      });
     }
   };
 
