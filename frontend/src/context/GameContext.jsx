@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getRandomQuests } from '../data/quests';
+import { getRandomQuests, refreshQuests, getFallbackQuests } from '../data/quests';
 import { getRandomShopItems } from '../data/outfits';
 
 const GameContext = createContext();
@@ -70,6 +70,8 @@ export const GameProvider = ({ children, supabaseUser = null, signOut: supabaseS
           shopInventory: getRandomShopItems(3, parsed.ownedOutfits || []),
           questStartTime: null,
           uploadedImage: null,
+          availableQuests: [],
+          openTasksInitialized: false,
         };
       }
     } catch (error) {
@@ -86,6 +88,8 @@ export const GameProvider = ({ children, supabaseUser = null, signOut: supabaseS
       shopInventory: getRandomShopItems(3, []),
       questStartTime: null,
       uploadedImage: null,
+      availableQuests: [],
+      openTasksInitialized: false,
     };
   };
 
@@ -221,6 +225,32 @@ export const GameProvider = ({ children, supabaseUser = null, signOut: supabaseS
     }));
   };
 
+  const refreshAvailableQuests = async () => {
+    try {
+      await refreshQuests();
+      setState(prev => {
+        const completedIds = (prev.completedQuests || []).map(q => q.id);
+        const randomQuests = getRandomQuests(3, completedIds);
+        return {
+          ...prev,
+          availableQuests: randomQuests,
+          openTasksInitialized: true,
+        };
+      });
+    } catch (error) {
+      console.error('Error refreshing quests:', error);
+      setState(prev => {
+        const completedIds = (prev.completedQuests || []).map(q => q.id);
+        const fallbackQuests = getFallbackQuests(completedIds);
+        return {
+          ...prev,
+          availableQuests: fallbackQuests,
+          openTasksInitialized: true,
+        };
+      });
+    }
+  };
+
   const completeQuest = () => {
     if (!state.activeQuest) return;
 
@@ -242,6 +272,9 @@ export const GameProvider = ({ children, supabaseUser = null, signOut: supabaseS
       uploadedImage: null,
       currentPage: 'landing',
     }));
+
+    // Refresh available quests after completing
+    refreshAvailableQuests();
 
     // Show success toast after navigation completes
     setTimeout(() => {
@@ -316,6 +349,8 @@ export const GameProvider = ({ children, supabaseUser = null, signOut: supabaseS
     shopInventory: state.shopInventory,
     questStartTime: state.questStartTime,
     uploadedImage: state.uploadedImage,
+    availableQuests: state.availableQuests,
+    openTasksInitialized: state.openTasksInitialized,
     toast,
     
     // Auth Actions
@@ -329,7 +364,9 @@ export const GameProvider = ({ children, supabaseUser = null, signOut: supabaseS
     purchaseOutfit,
     equipOutfit,
     rerollShop,
+    showToast,
     hideToast,
+    refreshAvailableQuests,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

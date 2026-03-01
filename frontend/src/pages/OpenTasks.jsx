@@ -1,69 +1,61 @@
 import { useGame } from '../context/GameContext';
-import { getRandomQuests, getFallbackQuests, refreshQuests } from '../data/quests';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import BackButton from '../components/BackButton';
 import './pages.css';
 import './OpenTasks.css';
 
 const OpenTasks = () => {
-  const { acceptQuest, completedQuests } = useGame();
-  const [availableQuests, setAvailableQuests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { availableQuests, openTasksInitialized, refreshAvailableQuests, acceptQuest } = useGame();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const completedQuestsRef = useRef(completedQuests);
-  completedQuestsRef.current = completedQuests;
 
-  const loadQuests = useCallback(async () => {
+  // Initialize available quests on first mount
+  useEffect(() => {
+    if (!openTasksInitialized) {
+      setLoading(true);
+      setError(null);
+      refreshAvailableQuests()
+        .catch(() => {
+          setError('Failed to load initial quests');
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [openTasksInitialized, refreshAvailableQuests]);
+
+  const handleRetry = async () => {
     setLoading(true);
     setError(null);
-    const completedIds = (completedQuestsRef.current || []).map(q => q.id);
     try {
-      await refreshQuests();
-      setAvailableQuests(getRandomQuests(3, completedIds));
+      await refreshAvailableQuests();
     } catch (err) {
-      setError(err.message ?? 'Failed to load tasks');
-      setAvailableQuests(getFallbackQuests(completedIds));
+      setError(err.message ?? 'Failed to load quests');
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const completedIds = (completedQuestsRef.current || []).map(q => q.id);
-    setAvailableQuests(getFallbackQuests(completedIds));
-    setLoading(true);
-    setError(null);
-    refreshQuests()
-      .then(() => {
-        if (!cancelled) setAvailableQuests(getRandomQuests(3, completedIds));
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err.message ?? 'Failed to load tasks');
-          setAvailableQuests(getFallbackQuests(completedIds));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
+  };
 
   const handleAcceptQuest = (quest) => {
     acceptQuest(quest);
   };
 
+  // Sort quests by difficulty: easy, medium, hard
+  const sortedQuests = [...availableQuests].sort((a, b) => {
+    const difficultyOrder = { easy: 1, medium: 2, hard: 3 };
+    return (difficultyOrder[a.category] || 99) - (difficultyOrder[b.category] || 99);
+  });
+
   return (
     <div className="page-container">
       <BackButton destination="landing" />
-      <h1 className="page-title">Tasks</h1>
+      <h1 className="page-title">Quests</h1>
 
       {error && (
         <div className="tasks-error">
           <p>{error}</p>
-          <p className="tasks-error-hint">Showing fallback tasks. You can retry for new AI-generated tasks.</p>
-          <button type="button" className="retry-button" onClick={loadQuests} disabled={loading}>
+          <p className="tasks-error-hint">Showing fallback quests. You can retry for new AI-generated quests.</p>
+          <button type="button" className="retry-button" onClick={handleRetry} disabled={loading}>
             Retry
           </button>
         </div>
@@ -71,7 +63,7 @@ const OpenTasks = () => {
 
       {loading ? (
         <div className="tasks-loading">
-          <p className="tasks-loading-text">Loading tasks</p>
+          <p className="tasks-loading-text">Loading quests</p>
           <span className="loading-dots" aria-hidden="true">
             <span className="loading-dot" />
             <span className="loading-dot" />
@@ -80,31 +72,17 @@ const OpenTasks = () => {
         </div>
       ) : (
       <div className="tasks-grid">
-        {availableQuests.map((quest, index) => (
+        {sortedQuests.map((quest, index) => (
           <div key={quest.id} className="task-card">
             <div className="task-header">
-              <h3>Task {index + 1}</h3>
+              <h3>Quest {index + 1}</h3>
               <span className="task-category">{quest.category}</span>
             </div>
-            
-            <div className="task-content">
-              <div className="task-description">
-                {quest.description}
-              </div>
-              
-              <div className="task-info">
-                <div className="task-info-box">
-                  <p><strong>Time:</strong> {quest.timeLimit} min</p>
-                  <p><strong>Reward:</strong> {quest.coinReward} coins</p>
-                </div>
-              </div>
-            </div>
-
             <button 
               className="accept-button"
               onClick={() => handleAcceptQuest(quest)}
             >
-              Accept Task
+              Accept Quest
             </button>
           </div>
         ))}
