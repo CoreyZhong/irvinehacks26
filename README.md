@@ -79,7 +79,7 @@ cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt -r requirements-dev.txt
-python -m src.main
+fastapi dev src/main.py
 ```
 
 The API will be available at `http://localhost:8000`.
