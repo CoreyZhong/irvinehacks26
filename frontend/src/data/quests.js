@@ -1,5 +1,11 @@
 let quests = [];
 
+const FALLBACK_QUESTS = [
+  { id: 'fallback_1', category: 'easy', description: 'Find something blue on campus and take a photo.', timeLimit: 10, coinReward: 3 },
+  { id: 'fallback_2', category: 'medium', description: 'Take a photo with something anteater-related at UCI.', timeLimit: 20, coinReward: 5 },
+  { id: 'fallback_3', category: 'hard', description: 'Find three different trees in Aldrich Park and photograph each.', timeLimit: 30, coinReward: 7 },
+];
+
 const hashString = (str) => {
   let hash = 0;
   for (let i = 0; i < str.length; i += 1) {
@@ -23,8 +29,9 @@ export const refreshQuests = async () => {
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || 'Failed to fetch quests');
+    const err = await res.json().catch(() => null);
+    const message = (err && typeof err.detail === 'string') ? err.detail : (err?.detail?.error) || `Request failed (${res.status})`;
+    throw new Error(message);
   }
 
   const data = await res.json();
@@ -46,6 +53,11 @@ export const getRandomQuests = (count = 3, excludeIds = []) => {
   const availableQuests = quests.filter(q => !excludeIds.includes(q.id));
   const shuffled = [...availableQuests].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
+};
+
+export const getFallbackQuests = (excludeIds = []) => {
+  const available = FALLBACK_QUESTS.filter(q => !excludeIds.includes(q.id));
+  return available.slice(0, 3);
 };
 
 // Helper function to get quest by ID
