@@ -1,68 +1,120 @@
-# Starter Pack Series: Full-Stack Web Application
+# Zot Quests
 
-A single-page React application backed by FastAPI, ready to deploy on Render or Vercel.
+A gamified quest-completion web application that encourages college students to curb their boredom or destress by completing quests and earn rewards. Built with React, FastAPI, and Supabase.
 
-[Create a new repository using this template](https://github.com/new?template_name=starter-pack-full-stack-web-app&template_owner=HackAtUCI)
-to get started.
+## Overview
 
-## Introduction
+Zot Quests is a full-stack web application where users can log in, view available quests, complete them by submitting proof through images, earn coins to customize their Petrs, and compete on a leaderboard. The app features a dynamic quest generation system powered by Google's Gemini 2.5 Flash and a gamification system with outfit cosmetics and coin rewards.
 
-Welcome to the starter-pack series on full-stack web applications! This
-repository serves as an introduction to how full-stack web applications work
-and how to leverage frameworks to make it easier to build one.
+## Features
 
-## What are Frontends and Backends?
+- **User Authentication**: Secure login and password reset with Supabase Auth
+- **Dynamic Quest Generation**: AI-powered quest creation with image verification for completion of quests
+- **Gamification**: Earn coins by completing quests and compete on the leaderboard
+- **Cosmetics System**: Purchase and equip outfit skins using earned coins
+- **Performance Tracking**: View completed quests and track progress
+- **Responsive Design**: User-friendly interface built with React
+- **Interactive Leaderboard**: Interactable leaderboard to view other players' Petrs
 
-A frontend is the software visible to a user such as what appears on a webpage,
-while a backend is the software running behind the scenes such as an endpoint
-providing the data that will eventually be shown on the webpage.
+## Tech Stack
 
-Frontends for webpages generally consist of HTML, CSS, and JavaScript that come
-together to provide the user interface (UI) along with other visual assets.
-While you can code directly in those languages, JavaScript libraries such as React
-allow you to do the same faster and more efficiently.
+### Frontend
+- **React** - UI component library
+- **Vite** - Fast build tool and dev server
+- **React Router** - Client-side routing
+- **Supabase JS Client** - Database and authentication
+- **CSS** - Custom styling for responsive design
 
-Backends are much more flexible since all you need is a web server listening for
-different types of [HTTP requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
-on various routes (e.g. /user/info), each of which can perform its own action
-such as modifying a database or triggering another action.
-There are many libraries, such as FastAPI (Python) and Express (JavaScript) that make
-it easy to build special servers known as APIs which interact with a frontend client.
+### Backend
+- **FastAPI** - Modern Python web framework
+- **Gemini 2.5 Flash** - AI-powered quest generation and image verifcation
+- **Python-Jose** - JWT authentication
+- **Supabase** - Postgre database, authentication, and storage
 
-## What is a Full-Stack Web App?
+## Project Structure
 
-With the rising popularity of single-page applications (SPAs), simple webpages can be
-made by keeping the frontend and backend in separate layers. This allows constructing
-a full-stack web application with a frontend UI client and a backend API server.
+```
+├── frontend/                 # React SPA
+│   ├── src/
+│   │   ├── pages/           # Page components (Landing, Login, Leaderboard, etc.)
+│   │   ├── components/      # Reusable UI components
+│   │   ├── context/         # React context for state management
+│   │   ├── lib/             # Utility functions and API calls
+│   │   └── data/            # Static data (quests, outfits)
+│   └── package.json
+├── backend/                  # FastAPI server
+│   ├── src/
+│   │   ├── main.py          # Entry point and API routes
+│   │   ├── api.py           # API endpoint handlers
+│   │   ├── auth.py          # Authentication logic
+│   │   ├── quest_generation.py   # AI-powered quest generation
+│   │   └── quest_verification.py # Quest completion verification
+│   └── requirements.txt
+├── api/                      # Serverless API functions (Vercel)
+└── DEPLOYMENT.md            # Deployment instructions
+```
 
-For example, let's say you're trying to access a profile page on some website, and the
-data is stored on a database somewhere. When the page loads, the client sends a request
-to the server which, in turn, retrieves the corresponding data from the database.
-The server then returns the data back to the client for the UI to display on the page.
-This interaction is just one example of how a frontend and backend can work together to
-provide a great and scalable experience for its users.
+## Getting Started
 
-**Important:** You might be wondering why you couldn't just query the database directly
-from the frontend. Databases require sensitive credentials for access, and if you store
-those on the frontend, they _will_ be found no matter where you put them. Keeping them
-on the server is much more secure because they won't be visible to the frontend.
-This is relevant mainly for purely client-rendered applications: newer React frameworks
-such as [Next.js](https://nextjs.org) promote a model of server rendering which unifies
-the data fetching and rendering into one place for improved security and performance.
+### Prerequisites
+- Node.js 16+ and npm
+- Python 3.9+
+- Supabase account
+- Google's Gemini 2.5 Flash API key (for quest generation)
 
-## This Application
+### Frontend Setup
 
-This starter pack consists of a frontend UI made with [React](https://react.dev) and a
-backend API made with [FastAPI](https://fastapi.tiangolo.com).
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-React is a JavaScript library for building composable and interactive components through
-JSX which is markup similar to HTML. These components can be efficiently rendered to the
-browser even as the data provided changes.
+Visit `http://localhost:5173` in your browser.
 
-FastAPI is a Python framework for building APIs with simple functions and decorators.
-The framework is easy to use and also, as the name implies, very fast.
+### Backend Setup
 
-For a deeper explanation on how the app is put together, please view the corresponding
-`README` files for the [frontend](frontend/README.md) and [backend](backend/README.md).
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python -m src.main
+```
 
-For deploying this app to the internet, see [DEPLOYMENT.md](DEPLOYMENT.md).
+The API will be available at `http://localhost:8000`.
+
+### Environment Variables
+
+Create a `.env` file in the `frontend` directory:
+```
+
+```
+
+Create a `.env` file in the `backend` directory:
+
+```
+SUPABASE_JWT_SECRET=your_supabase_jwt_secret
+QUEST_GENERATION_GEMINI_API_KEY=your_gemini_2.5_flash_api_key
+QUEST_VERIFICATION_GEMINI_API_KEY=your_gemini_2.5_flash_api_key
+```
+
+## Leaderboard Ranking
+
+The leaderboard ranks players by **total coins earned** or **total quests completed**. This encourages users to complete more quests and earn higher coin rewards to compete.
+
+## Database Schema
+
+View the SQL setup files:
+- [Game State Table](supabase-game-state.sql)
+- [User Profiles Table](supabase-profiles-table.sql)
+
+## Development Guide
+
+For more detailed information on the architecture and development:
+- [Frontend README](frontend/README.md)
+- [Backend README](backend/README.md)
+
+## License
+
+This project is open source and available under the MIT License.
