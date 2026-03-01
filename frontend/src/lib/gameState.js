@@ -203,7 +203,7 @@ export async function fetchLeaderboard(limit = 50, sortBy = 'coins_earned_lifeti
   const orderColumn = sortBy === 'completed_count' ? 'completed_count' : 'coins_earned_lifetime';
   const { data, error } = await supabase
     .from('leaderboard_view')
-    .select('id, username, coins, coins_earned_lifetime, completed_count')
+    .select('id, username, coins, coins_earned_lifetime, completed_count, equipped_outfit_id')
     .order(orderColumn, { ascending: false })
     .limit(limit);
   if (error) throw new Error(error.message || 'Failed to load leaderboard');
